@@ -1,0 +1,5 @@
+{
+  "name": "Gemini STL Inspector",
+  "description": "A high-performance 3D STL viewer with real-time dimension measurements and AI-powered object analysis.",
+  "requestFramePermissions": []
+}
