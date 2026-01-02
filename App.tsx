@@ -8,6 +8,7 @@ const App: React.FC = () => {
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [dimensions, setDimensions] = useState<ModelDimensions | null>(null);
   const [viewerMode, setViewerMode] = useState<ViewerMode>(ViewerMode.VIEW);
+  const [scale, setScale] = useState<number>(1);
   
   // Initialize with -90 degree rotation on X to convert Z-up (STL standard) to Y-up (Three.js standard)
   const [meshRotation, setMeshRotation] = useState<THREE.Quaternion>(() => {
@@ -26,6 +27,7 @@ const App: React.FC = () => {
     setFileUrl(url);
     setDimensions(null);
     setViewerMode(ViewerMode.VIEW);
+    setScale(1); // Reset scale to 100%
     
     // Reset rotation to default Z-up fix on new file load
     const q = new THREE.Quaternion();
@@ -83,6 +85,7 @@ const App: React.FC = () => {
           viewerMode={viewerMode}
           meshRotation={meshRotation}
           onRotationChange={setMeshRotation}
+          scale={scale}
         />
         
         {!fileUrl && (
@@ -100,6 +103,8 @@ const App: React.FC = () => {
         viewerMode={viewerMode}
         setViewerMode={setViewerMode}
         onRotateModel={handleRotate90}
+        scale={scale}
+        onScaleChange={setScale}
       />
     </div>
   );

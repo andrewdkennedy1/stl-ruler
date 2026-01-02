@@ -12,18 +12,21 @@ interface Viewer3DProps {
   viewerMode: ViewerMode;
   meshRotation: THREE.Quaternion;
   onRotationChange: (q: THREE.Quaternion) => void;
+  scale: number;
 }
 
 const STLModel = ({ 
   url, 
   onDimensionsCalculated, 
   onClick,
-  meshRotation
+  meshRotation,
+  scale
 }: { 
   url: string, 
   onDimensionsCalculated: (dims: ModelDimensions) => void,
   onClick?: (e: ThreeEvent<MouseEvent>) => void,
-  meshRotation: THREE.Quaternion
+  meshRotation: THREE.Quaternion,
+  scale: number
 }) => {
   const geometry = useLoader(STLLoader, url);
   const meshRef = useRef<THREE.Mesh>(null);
@@ -35,10 +38,16 @@ const STLModel = ({
       // This ensures the local origin is at the center of mass
       meshRef.current.geometry.center();
       
-      // 2. Calculate the bounding box of the geometry *after* rotation is applied
-      // We clone to avoid mutating the actual render geometry with the rotation
+      // 2. Calculate the bounding box of the geometry *after* rotation AND scale are applied
+      // We clone to avoid mutating the actual render geometry with the rotation/scale
       const tempGeo = meshRef.current.geometry.clone();
+      
+      // Apply rotation first
       tempGeo.applyQuaternion(meshRotation);
+      
+      // Apply scale
+      tempGeo.scale(scale, scale, scale);
+      
       tempGeo.computeBoundingBox();
       const box = tempGeo.boundingBox;
       
@@ -62,7 +71,7 @@ const STLModel = ({
           setVerticalOffset(-box.min.y);
       }
     }
-  }, [url, meshRotation, onDimensionsCalculated, geometry]);
+  }, [url, meshRotation, scale, onDimensionsCalculated, geometry]);
 
   return (
     <group position={[0, verticalOffset, 0]}>
@@ -70,6 +79,7 @@ const STLModel = ({
         ref={meshRef} 
         geometry={geometry} 
         quaternion={meshRotation}
+        scale={[scale, scale, scale]}
         castShadow 
         receiveShadow
         onClick={onClick}
@@ -93,7 +103,7 @@ const CanvasCapture = ({ onCanvasReady }: { onCanvasReady: (canvas: HTMLCanvasEl
   return null;
 };
 
-// AutoFit now accepts a trigger to re-run fitting when rotation changes
+// AutoFit now accepts a trigger to re-run fitting when rotation/scale changes
 const AutoFit = ({ trigger }: { trigger?: any }) => {
     const bounds = useBounds();
     useEffect(() => {
@@ -176,13 +186,14 @@ const Viewer3D: React.FC<Viewer3DProps> = ({
   onCanvasReady,
   viewerMode,
   meshRotation,
-  onRotationChange
+  onRotationChange,
+  scale
 }) => {
   const [measurePoints, setMeasurePoints] = useState<THREE.Vector3[]>([]);
 
   useEffect(() => {
     setMeasurePoints([]);
-  }, [fileUrl, viewerMode, meshRotation]);
+  }, [fileUrl, viewerMode, meshRotation, scale]);
 
   const handleMeshClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
@@ -216,9 +227,8 @@ const Viewer3D: React.FC<Viewer3DProps> = ({
     );
   }
 
-  // Create a unique key for rotation to help with updates if needed, 
-  // though Bounds trigger handles the camera.
-  const rotationKey = meshRotation.toArray().join('_');
+  // Create a unique key for trigger to help with updates
+  const triggerKey = meshRotation.toArray().join('_') + '_' + scale;
 
   return (
     <div className={`w-full h-full relative bg-slate-900 ${
@@ -252,9 +262,10 @@ const Viewer3D: React.FC<Viewer3DProps> = ({
              onDimensionsCalculated={onDimensionsCalculated} 
              onClick={handleMeshClick}
              meshRotation={meshRotation}
+             scale={scale}
            />
-           {/* Re-fit camera when rotation changes */}
-           <AutoFit trigger={rotationKey} />
+           {/* Re-fit camera when rotation or scale changes */}
+           <AutoFit trigger={triggerKey} />
         </Bounds>
         
         <MeasurementTool points={measurePoints} />

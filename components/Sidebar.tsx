@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Box, Ruler, MessageSquare, Loader2, Send, Rotate3d, Info, MousePointer2, ArrowDownToLine } from 'lucide-react';
+import { Upload, Box, Ruler, MessageSquare, Loader2, Send, Rotate3d, Info, MousePointer2, ArrowDownToLine, Scaling } from 'lucide-react';
 import { ModelDimensions, AnalysisMessage, ViewerMode } from '../types';
 import { analyzeModelImage } from '../services/geminiService';
 
@@ -10,6 +10,8 @@ interface SidebarProps {
   viewerMode: ViewerMode;
   setViewerMode: (mode: ViewerMode) => void;
   onRotateModel: () => void;
+  scale: number;
+  onScaleChange: (scale: number) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
@@ -18,7 +20,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   getCanvasScreenshot,
   viewerMode,
   setViewerMode,
-  onRotateModel
+  onRotateModel,
+  scale,
+  onScaleChange
 }) => {
   const [activeTab, setActiveTab] = useState<'info' | 'ai'>('info');
   const [messages, setMessages] = useState<AnalysisMessage[]>([]);
@@ -141,6 +145,24 @@ const Sidebar: React.FC<SidebarProps> = ({
                     <span className="text-xs font-medium">Rotate X</span>
                   </button>
                  </div>
+
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-6 mb-2">Scale (%)</h3>
+                <div className="bg-slate-900/50 p-2 rounded-lg border border-slate-700 flex items-center gap-2">
+                  <Scaling className="w-4 h-4 text-slate-400" />
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={Math.round(scale * 100)}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      if (!isNaN(val) && val > 0) {
+                        onScaleChange(val / 100);
+                      }
+                    }}
+                    className="w-full bg-transparent text-white font-mono text-sm focus:outline-none"
+                  />
+                </div>
 
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-6 mb-2">Measurement</h3>
                 <div className="grid grid-cols-1 gap-2">
